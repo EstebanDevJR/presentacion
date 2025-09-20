@@ -8,7 +8,7 @@
 Este proyecto demuestra la implementación de un **sistema multiagente inteligente** especializado en consultas legales colombianas, integrando **RAG (Retrieval-Augmented Generation)**, **servicios de voz** y **guardrails de seguridad** para crear una solución robusta y escalable.
 
 ### 🎯 Objetivos Demostrados
-- **Arquitectura Multiagente**: Framework condicional vs lineal
+- **Arquitectura Multiagente**: Framework condicional
 - **Agentes Especializados**: Pequeños, medibles y componibles
 - **Monitoreo y Guardrails**: Protección de contenido y privacidad
 - **Integración RAG + Voz**: Consultas legales conversacionales

@@ -1,104 +1,139 @@
-# 🤖 Sistema Multiagente Legal con RAG y Voz
-## Demostración de Arquitectura Avanzada para Consultas de Derecho Colombiano
+# ⚖️ Sistema Legal Multiagente Colombia
+## Arquitectura Avanzada de IA para Consultas Jurídicas Especializadas
 
 ---
 
 ## 📋 Resumen Ejecutivo
 
-Este proyecto demuestra la implementación de un **sistema multiagente inteligente** especializado en consultas legales colombianas, integrando **RAG (Retrieval-Augmented Generation)**, **servicios de voz** y **guardrails de seguridad** para crear una solución robusta y escalable.
+**Sistema Legal Multiagente** es una plataforma de IA que democratiza el acceso a asesoría jurídica especializada en Colombia, utilizando **6 agentes especializados** que trabajan coordinadamente para brindar respuestas precisas y contextualizadas según el área legal específica.
 
-### 🎯 Objetivos Demostrados
-- **Arquitectura Multiagente**: Framework condicional
-- **Agentes Especializados**: Pequeños, medibles y componibles
-- **Monitoreo y Guardrails**: Protección de contenido y privacidad
-- **Integración RAG + Voz**: Consultas legales conversacionales
+### 🎯 Problema Resuelto
+- **Acceso limitado**: Consultas legales costosas y lentas
+- **Respuestas genéricas**: Falta de especialización por área jurídica
+- **Barrera de entrada**: Complejidad del lenguaje legal
+- **Disponibilidad**: Horarios limitados de abogados
+
+### 💡 Solución Propuesta
+- **6 Agentes Especializados**: Civil, Comercial, Laboral, Tributario, Constitucional, Administrativo
+- **Análisis de Documentos**: Extracción inteligente con AWS Textract + PyPDF2
+- **Interfaz Multimodal**: Texto, voz y documentos
+- **Memoria Conversacional**: Contexto persistente entre consultas
 
 ---
 
 ## 🏗️ Arquitectura del Sistema
 
-### 1. Framework de Flujo: **Condicional Inteligente**
+### 1. **Flujo Multiagente Orquestado con LangGraph**
 
 ```mermaid
 graph TD
-    A[Usuario] --> B[Coordinador GPT-4o]
-    B --> C{Análisis de Consulta}
-    C -->|Documentos Específicos| D[Agente Análisis Documentos]
-    C -->|Derecho Civil| E[Agente Civil]
-    C -->|Derecho Comercial| F[Agente Comercial]
-    C -->|Derecho Laboral| G[Agente Laboral]
-    C -->|Derecho Tributario| H[Agente Tributario]
-    D --> I[Evaluador]
-    E --> I
-    F --> I
-    G --> I
-    H --> I
-    I --> J[Respuesta Final]
+    A[👤 Usuario] --> B[🧠 Coordinador]
+    B --> C{📊 Clasificación}
+    C -->|📄 Documentos| D[📑 Análisis Docs]
+    C -->|⚖️ Civil| E[👨‍⚖️ Agente Civil]
+    C -->|💼 Comercial| F[🏢 Agente Comercial]
+    C -->|👷 Laboral| G[⚒️ Agente Laboral]
+    C -->|💰 Tributario| H[📊 Agente Tributario]
+    C -->|📜 Constitucional| I[🏛️ Agente Constitucional]
+    C -->|🏛️ Administrativo| J[📋 Agente Administrativo]
+    D --> K[🎓 Evaluador Senior]
+    E --> K
+    F --> K
+    G --> K
+    H --> K
+    I --> K
+    J --> K
+    K --> L[✅ Respuesta Final]
+    L --> M[💾 Memoria Conversacional]
 ```
 
-**Ventajas del Framework Condicional:**
-- ✅ **Routing Inteligente**: El coordinador determina el especialista más apropiado
-- ✅ **Eficiencia**: Solo se ejecuta el agente necesario
-- ✅ **Escalabilidad**: Fácil agregar nuevos especialistas
-- ✅ **Memoria Contextual**: Mantiene historial de conversación
+### 2. **Stack Tecnológico Completo**
 
-### 2. Agentes Pequeños, Medibles y Componibles
+#### **Backend (FastAPI + LangGraph)**
+- **Coordinador**: OpenAI GPT-4o (clasificación inteligente)
+- **Especialistas**: OpenAI GPT-4o-mini (respuestas específicas)
+- **Evaluador**: GPT-4o (consolidación y mejora técnica)
+- **RAG**: Pinecone + OpenAI Embeddings
+- **Documentos**: AWS S3 + Textract + PyPDF2
+- **Voz**: Elevenlabs
 
-#### 🧠 **Coordinador (GPT-4o)**
+#### **Frontend (Next.js + TypeScript)**
+- **UI**: Tailwind CSS + shadcn/ui
+- **Estado**: React Hooks + Context API
+- **PWA**: Manifest + Service Worker
+- **Audio**: MediaRecorder API + Audio Player
+
+### 3. **Componentes Clave de la Arquitectura**
+
+#### 🧠 **Coordinador Inteligente**
 ```python
-# Especializado en clasificación crítica
-def create_coordinator_agent(self):
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", """Coordinador legal colombiano EXPERTO. Análisis RÁPIDO y PRECISO.
-        
-        DETERMINA (respuesta JSON únicamente):
-        - Área legal: civil, comercial, laboral, tributario, document_analysis
-        - Complejidad: simple, medium, complex
-        - Múltiples áreas si aplica"""),
-        ("human", "{question}")
-    ])
-    return prompt | self.coordinator_model  # 🚀 Modelo potente para clasificación
+# Análisis y routing de consultas
+def coordinator_node(self, state: AgentState) -> AgentState:
+    """
+    Clasifica consulta y determina agentes a activar
+    - Área legal: civil, comercial, laboral, tributario, constitucional, administrativo
+    - Complejidad: simple, medium, complex  
+    - Múltiples áreas: para consultas complejas
+    """
+    response = self.agents["coordinator"].invoke({
+        "question": state["question"],
+        "context": state.get("context", "")
+    })
+    
+    # Parsing inteligente con fallbacks
+    classification = self._parse_coordinator_response(response.content)
+    state["legal_area"] = classification.get("legal_area", "civil")
+    return state
 ```
 
-#### ⚖️ **Especialistas (GPT-4o-mini)**
+#### ⚖️ **Agentes Especializados**
 ```python
-# Optimizados para velocidad y eficiencia
+# Cada agente con conocimiento específico del área legal
 def create_civil_agent(self):
+    """
+    Agente Civil: Contratos, propiedad, familia, sucesiones
+    OBLIGATORIO - Siempre cita: artículos CC, procedimientos específicos
+    """
     prompt = ChatPromptTemplate.from_messages([
-        ("system", """CIVIL COLOMBIANO. Respuesta directa y práctica.
+        ("system", """Abogado CIVIL colombiano especializado. 
         
-        Contexto: {context}
-        Fuentes: {formatted_sources}
-        
-        Formato: Respuesta concisa + artículo clave + paso siguiente."""),
-        ("human", "{question}")
+        OBLIGATORIO - Siempre cita:
+        - Artículos específicos del Código Civil
+        - Sentencias de Corte Suprema cuando aplique
+        - Procedimientos paso a paso con entidades competentes
+        - Plazos exactos y documentos requeridos"""),
+        ("human", "Contexto: {context}\nPregunta: {question}")
     ])
-    return prompt | self.model  # Modelo rápido para especialistas
+    return prompt | self.model
 ```
 
-#### 📊 **Métricas de Rendimiento**
-- **Tiempo de Respuesta**: < 800ms promedio
-- **Precisión de Clasificación**: 95%+ en área legal correcta
-- **Confianza**: 0.85+ en respuestas especializadas
-- **Tokens Optimizados**: 500 tokens para especialistas, 150 para coordinador
+#### 🎓 **Evaluador Senior**
+```python
+# Consolida y mejora respuestas técnicamente
+def evaluator_node(self, state: AgentState) -> AgentState:
+    """
+    Evaluador Senior que:
+    - Consolida respuestas de múltiples agentes
+    - Mejora técnicamente el contenido
+    - Agrega citas legales faltantes
+    - Incluye procedimientos específicos
+    - Mantiene coherencia conversacional
+    """
+    response = self.agents["evaluator"].invoke({
+        "agent_responses": state["responses"],
+        "conversation_context": self.memory_service.get_conversation_context(session_id)
+    })
+    
+    state["final_answer"] = response.content.strip()
+    return state
+```
 
 ---
 
 ## 🛡️ Monitoreo y Guardrails Implementados
 
-### 1. **Evitar Contenido Dañino**
-```python
-class SecureLogger:
-    def __init__(self, name: str):
-        # Patrones de información sensible a sanitizar
-        self.sensitive_patterns = [
-            (r'(api[_-]?key["\']?\s*[:=]\s*["\']?)([a-zA-Z0-9_\-]{20,})(["\']?)', r'\1***REDACTED***\3'),
-            (r'(password["\']?\s*[:=]\s*["\']?)([^"\']+)(["\']?)', r'\1***REDACTED***\3'),
-            # ... más patrones de seguridad
-        ]
-```
 
-### 2. **Mantenerse en el Tema**
+### 1. **Mantenerse en el Tema**
 ```python
 # Validación de área legal en coordinador
 def _route_to_specialists(self, state: AgentState) -> str:
@@ -113,7 +148,7 @@ def _route_to_specialists(self, state: AgentState) -> str:
     return area_mapping.get(legal_area, "civil")
 ```
 
-### 3. **Reducir Alucinaciones**
+### 2. **Reducir Alucinaciones**
 ```python
 # Sistema de confianza y validación
 @dataclass
@@ -125,19 +160,7 @@ class AgentResponse:
     metadata: Dict[str, Any] = field(default_factory=dict)
 ```
 
-### 4. **Proteger la Privacidad**
-```python
-# Sanitización automática de logs
-def _sanitize_message(self, message: str) -> str:
-    # Detectar contenido legal sensible
-    message_lower = sanitized.lower()
-    if any(keyword in message_lower for keyword in self.sensitive_keywords):
-        if len(sanitized) > 100:
-            sanitized = sanitized[:100] + "... [CONTENT REDACTED]"
-    return sanitized
-```
-
-### 5. **Seguir Instrucciones**
+### 3. **Seguir Instrucciones**
 ```python
 # Validaciones de entrada estrictas
 def process_query(self, question: str, ...):
@@ -225,38 +248,11 @@ class VoiceService:
 ```
 
 ### **Flujo de Voz Completo**
-1. **STT**: Audio → Texto (ElevenLabs Scribe v1)
+1. **STT**: Audio → Texto (ElevenLabs Scribe)
 2. **Procesamiento**: Texto → Sistema Multiagente
 3. **TTS**: Respuesta → Audio (Voz personalizada)
 4. **Entrega**: Audio optimizado para consultas legales
 
----
-
-## 📊 Casos de Uso Demostrados
-
-### 1. **Consulta Civil**
-```
-Usuario: "¿Cómo puedo reclamar una herencia en Colombia?"
-→ Coordinador: Clasifica como "civil", complejidad "medium"
-→ Agente Civil: Proporciona procedimiento específico
-→ Evaluador: Consolida respuesta con confianza 0.87
-```
-
-### 2. **Análisis de Documentos**
-```
-Usuario: Sube contrato + "¿Qué dice sobre propiedad intelectual?"
-→ Coordinador: Detecta documentos específicos
-→ Agente Análisis: Busca cláusulas específicas
-→ Respuesta: Cita textual del documento
-```
-
-### 3. **Consulta de Voz**
-```
-Usuario: Graba audio "¿Cómo constituyo una SAS?"
-→ STT: Convierte a texto
-→ Sistema Multiagente: Procesa consulta comercial
-→ TTS: Genera respuesta en audio
-```
 
 ---
 
@@ -265,7 +261,7 @@ Usuario: Graba audio "¿Cómo constituyo una SAS?"
 ### **Para Desarrolladores**
 - ✅ **Arquitectura Modular**: Fácil agregar nuevos especialistas
 - ✅ **Monitoreo Integrado**: Logs seguros y métricas de rendimiento
-- ✅ **Escalabilidad**: Framework condicional eficiente
+- ✅ **Escalabilidad**: Framework eficiente
 - ✅ **Testing**: Agentes independientes y medibles
 
 ### **Para Usuarios Finales**
@@ -282,30 +278,6 @@ Usuario: Graba audio "¿Cómo constituyo una SAS?"
 
 ---
 
-## 🔧 Stack Tecnológico
-
-### **Backend**
-- **Framework**: FastAPI + LangGraph
-- **IA**: OpenAI GPT-4o (coordinador) + GPT-4o-mini (especialistas)
-- **RAG**: Vectorstore + Embeddings
-- **Voz**: ElevenLabs API (STT + TTS)
-- **Memoria**: LangGraph Checkpointer
-- **Caché**: Sistema custom con TTL
-
-### **Frontend**
-- **Framework**: Next.js 14 + TypeScript
-- **UI**: Tailwind CSS + shadcn/ui
-- **Estado**: React Context + Hooks
-- **PWA**: Service Worker + Manifest
-
-### **Infraestructura**
-- **Base de Datos**: Vectorstore para embeddings
-- **Archivos**: Sistema de uploads con validación
-- **Logs**: Sistema seguro con sanitización
-- **Monitoreo**: Métricas de rendimiento integradas
-
----
-
 ## 📈 Métricas de Rendimiento
 
 | Métrica | Valor | Descripción |
@@ -319,20 +291,19 @@ Usuario: Graba audio "¿Cómo constituyo una SAS?"
 
 ---
 
-## 🎯 Conclusiones
+### **🎯 Impacto Proyectado**
 
-Este proyecto demuestra exitosamente:
+- **👥 Democratización**: Acceso 24/7 a consultas legales especializadas
+- **💰 Reducción de costos**: 80-90% vs consulta tradicional
+- **⚡ Eficiencia**: Respuestas inmediatas con fundamento técnico
+- **📊 Escalabilidad**: Capacidad de atender miles de usuarios simultáneamente
 
-1. **Framework Condicional Efectivo**: Routing inteligente que optimiza recursos
-2. **Agentes Especializados**: Pequeños, medibles y altamente componibles
-3. **Guardrails Robustos**: Protección automática de contenido y privacidad
-4. **Integración RAG + Voz**: Consultas legales conversacionales naturales
-5. **Arquitectura Escalable**: Fácil agregar nuevos especialistas y funcionalidades
+---
 
-### **Impacto en la Industria Legal**
-- 🚀 **Democratización**: Acceso a consultas legales especializadas
-- ⚡ **Eficiencia**: Respuestas rápidas y precisas
-- 🛡️ **Seguridad**: Protección de información sensible
-- 🎤 **Accesibilidad**: Interfaz de voz para usuarios diversos
+## 🏆 **Valor Diferencial Clave**
+
+**Este no es otro chatbot legal.** Es un **sistema especializado** donde cada agente tiene conocimiento profundo de su área, con capacidad de análisis de documentos reales y memoria conversacional que permite consultas complejas y seguimiento de casos específicos.
+
+**La arquitectura multiagente permite** que cada consulta sea atendida por el especialista más apropiado, consolidada por un evaluador senior, y entregada con el nivel técnico que requiere el usuario, desde ciudadanos hasta profesionales del derecho.
 
 ---
